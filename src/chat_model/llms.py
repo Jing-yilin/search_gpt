@@ -1,6 +1,7 @@
 from langchain.llms import OpenAI, GPT4All, HuggingFacePipeline
 from langchain.chat_models import ChatOpenAI
 
+
 suppotred_llm_models = [
     "chat-openai",
     # "gpt-4",
@@ -11,12 +12,14 @@ suppotred_llm_models = [
     "gpt-3.5-turbo-0613",
     "gpt-3.5-turbo-16k",
     "gpt-3.5-turbo-16k-0613",
-    "gpt4all-falcon",
-    "gpt4all-13b-snoozy",
-    "meta-llama/Llama-2-70b-chat-hf",
-    "meta-llama/Llama-2-13b-chat-hf",
-    "meta-llama/Llama-2-70b-chat",
-    "meta-llama/Llama-2-13b-chat",
+    "gpt-3.5-turbo-instruct",
+    "gpt-3.5-turbo-0301 (Legacy)"
+    # "gpt4all-falcon",
+    # "gpt4all-13b-snoozy",
+    # "meta-llama/Llama-2-70b-chat-hf",
+    # "meta-llama/Llama-2-13b-chat-hf",
+    # "meta-llama/Llama-2-70b-chat",
+    # "meta-llama/Llama-2-13b-chat",
 
 ]
 

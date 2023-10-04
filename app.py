@@ -12,26 +12,13 @@ from bs4 import BeautifulSoup
 from time import time
 import asyncio
 
+from src.chat_model import suppotred_llm_models
 from src.common_utils import set_env
-from src.search_utils import GoogleSearcher, GoogleLang
+from src.search_utils import GoogleSearcher, hl_map
+from src.llm_utils import get_translated_titles, get_keywords_langs
 
 set_env()
 
-lang_map = {
-    "English(英语)": GoogleLang.en,
-    "Spanish(西班牙语)": GoogleLang.es,
-    "French(法语)": GoogleLang.fr,
-    "German(德语)": GoogleLang.de,
-    "Italian(意大利语)": GoogleLang.it,
-    "Portuguese(葡萄牙语)": GoogleLang.pt,
-    "Russian(俄语)": GoogleLang.ru,
-    "Chinese(中文)": GoogleLang.zh,
-    "Japanese(日语)": GoogleLang.ja,
-    "Korean(韩语)": GoogleLang.ko,
-    "Arabic(阿拉伯语)": GoogleLang.ar,
-    "Hindi(印地语)": GoogleLang.hi,
-    "Bengali(孟加拉语)": GoogleLang.bn,
-}
 
 if "state" not in st.session_state:
     st.session_state.state = 1
@@ -50,42 +37,77 @@ async def main():
         st.title("Search the World!")
 
         search_word = st.text_input(
-            "Please enter anthing in any language:", "Asia Game"
-        )
-        selected_langs = st.multiselect(
-            "Please select languages:",
-            lang_map.keys(),
-            default=["English(英语)", "Chinese(中文)"],
+            "Please enter anthing in any language:",
+            "2022亚运会韩国选手嘲讽中国选手",
             on_change=set_session_state,
             args=[1],
         )
-        langs = [lang_map[lang] for lang in selected_langs]
+        selected_langs = st.multiselect(
+            "Please select languages:",
+            hl_map.keys(),
+            default=["Chinese (Simplified)", "English", "Korean"],
+            on_change=set_session_state,
+            args=[1],
+        )
+        target_language = st.selectbox(
+            "Please select the target language:",
+            hl_map.keys(),
+            index=list(hl_map.keys()).index("Chinese (Simplified)"),
+            on_change=set_session_state,
+            args=[1],
+        )
+        model_name = st.selectbox(
+            "Please select the language model:",
+            suppotred_llm_models,
+            index=suppotred_llm_models.index("gpt-3.5-turbo-instruct"),
+            on_change=set_session_state,
+            args=[1],
+        )
+        langs = [hl_map[lang] for lang in selected_langs]
         num = st.slider("Please select the number of search results:", 1, 50, 10)
         st.button("Search", on_click=set_session_state, args=[2])
 
     if st.session_state.state >= 2:
         if search_word:
             with st.spinner("Searching... "):
+                keywords_langs = get_keywords_langs(
+                    search_word, selected_langs, model_name
+                )
+                print(f"keywords_langs: {keywords_langs}")
                 with requests.Session() as session:
-                    for lang in langs:
+                    for idx, lang in enumerate(langs):
                         google_searcher = GoogleSearcher(
-                            search_word, session, lang=lang, num=num
+                            keywords_langs[idx], session, lang=lang, num=num
                         )
                         await google_searcher._google_search()
                         st.session_state.responses[lang] = google_searcher.response
                         st.session_state.search_items[
                             lang
                         ] = google_searcher.search_items
+                        # sleep
+                        await asyncio.sleep(1)
 
                 set_session_state(3)
 
     if st.session_state.state >= 3:
-        for lang in langs:
+        for lang_idx, lang in enumerate(langs):
             st.header(f"Search Results [{lang}]")
             search_items = st.session_state.search_items[lang]
+            titles = [item["title"] for item in search_items.values()]
+            print(f"titles: {titles}")
+            # Chinese (Simplified) -> Chinese (Simplified)
+            translated_titles = (
+                titles
+                if target_language == selected_langs[lang_idx]
+                else get_translated_titles(titles, target_language, model_name)
+            )
+            # add translated titles to search_items
+            for idx, item in search_items.items():
+                item["translated_title"] = translated_titles[idx]
+
             for idx, item in search_items.items():
                 st.markdown(
-                    f"![]({item['logo']}) [{item['title']}]({item['url']})",
+                    f"![]({item['logo']}) [{item['translated_title']}]({item['url']})",
                     unsafe_allow_html=True,
                 )
 

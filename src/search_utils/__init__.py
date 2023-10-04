@@ -1,3 +1,3 @@
-from .google_search import GoogleSearcher, GoogleLang
+from .google_search import GoogleSearcher, hl_map
 
-__all__ = ["GoogleSearcher", "GoogleLang"]
+__all__ = ["GoogleSearcher", "hl_map"]

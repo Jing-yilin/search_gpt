@@ -1,14 +1,20 @@
-from langchain import OpenAI, LLMChain, PromptTemplate
+from langchain import OpenAI, LLMChain
+from langchain.prompts.prompt import PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import pathlib
 import sys
 
+from .prompts import SEARCH_LANGS_TEMPLATE
+from .llms import get_llm
+
 sys.path.append(str(pathlib.Path(__file__).resolve().parent))
 
 
-def get_chatgpt_chain(temperature=0.0, verbose=True, k=2):
+def get_conversation_chain(
+    model_name = "gpt-3.5-turbo-instruct", temperature=0.0, verbose=False, k=2, prompt=None,
+):
     """Create a chatgpt chain.
 
     Args:
@@ -20,33 +26,18 @@ def get_chatgpt_chain(temperature=0.0, verbose=True, k=2):
         ConversationChain: The chatgpt chain.
 
     Examples:
-        >>> from src.chat_model.conversation_chains import get_chatgpt_chain
-        >>> chain = get_chatgpt_chain(temperature=0.0, verbose=True, k=2)
-        >>> chain.predict(human_input="What is the main idea of the report?")
+        >>> from src.chat_model.conversation_chains import get_search_chain
+        >>> search_chain = get_search_chain()
+        >>> search_chain.predict("Asia Game", "['Chinese (Simplified)', 'English']")
     """
 
-    llm = OpenAI(temperature=temperature)
-
-    template = """Assistant is a large language model trained by OpenAI.
-
-    Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
-
-    Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.
-
-    Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist.
-
-    {history}
-    Human: {human_input}
-    Assistant:"""
-    prompt = PromptTemplate(
-        input_variables=["history", "human_input"], template=template
-    )
+    if prompt is None:
+        raise ValueError("Prompt cannot be None.")
 
     chatgpt_chain = LLMChain(
-        llm=llm,
+        llm=get_llm(model_name, temperature),
         prompt=prompt,
-        verbose=verbose,
-        memory=ConversationBufferWindowMemory(k=k),
+        verbose=verbose
     )
 
     return chatgpt_chain
