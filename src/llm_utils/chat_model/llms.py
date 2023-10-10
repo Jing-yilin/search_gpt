@@ -1,8 +1,8 @@
-from langchain.llms import OpenAI, GPT4All, HuggingFacePipeline
+from langchain.llms import OpenAI, GPT4All
 from langchain.chat_models import ChatOpenAI
 
 
-suppotred_llm_models = [
+ALL_MODELS = [
     "chat-openai",
     # "gpt-4",
     # "gpt-4-0314",
@@ -50,9 +50,9 @@ def get_llm(model_name: str, temperature: float = 0.0):
     Examples:
         >>> llm = get_llm("chat-openai")
     """
-    if model_name not in suppotred_llm_models:
+    if model_name not in ALL_MODELS:
         raise ValueError(
-            f"Model name {model_name} is not supported. Please use one of the following: {suppotred_llm_models}"
+            f"Model name {model_name} is not supported. Please use one of the following: {ALL_MODELS}"
         )
 
     if model_name.startswith("gpt-3.5"):
